@@ -14,7 +14,7 @@ const int height = 50;
 
     WINDOW *win = newwin(height, width, 0, 0);
 
-    start_color();  
+    /*start_color();  
 
 
 
@@ -47,7 +47,7 @@ if (has_colors() && COLOR_PAIRS >= 13)
         }
  
     }
-
+*/
 
 
 
@@ -55,14 +55,18 @@ if (has_colors() && COLOR_PAIRS >= 13)
     int x = 0;
     int y = 0;
      
-	int x1 = 10;
+	int x1 = 6;
 	int y1 = 4;
 
     for (;;)
     {
+        
+        
         mvprintw(y, x, "X");
 
         mvprintw(y1, x1, "c"); 
+        
+        mvprintw(3, 3, "Y");
 
         waddch(win, 'X' | A_UNDERLINE | COLOR_PAIR(3));
 
@@ -92,6 +96,10 @@ if (has_colors() && COLOR_PAIRS >= 13)
 	if (x1-1 == x && y == y1) x1++;
 	if (y1+1 == y && x == x1) y1--;
 	if (x1+1 == x && y == y1) x1--;
+	
+	
+	
+	
 	
 
         clear();
