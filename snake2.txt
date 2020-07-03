@@ -1,0 +1,199 @@
+#include <time.h>
+#include <ncurses.h>
+#include <unistd.h>
+#include <stdlib.h>
+
+
+	typedef enum {
+		LEFT,
+		RIGHT,
+		UP,
+		DOWN
+	} direction_type;
+
+	typedef struct point {
+		int x;
+		int y;
+	} point;
+
+	int x = 0,
+		y = 0,
+		maxY = 0, 
+		maxX = 0,
+		nextX = 0,
+		nextY = 0,
+		tailLength = 5,
+		score = 0;
+
+	bool gameOver = false;
+
+	direction_type Dir = RIGHT;
+	point snakeParts[255] = {};
+	point food;
+
+
+	void spawnFood() {
+		
+		food.x = (rand() % (maxX - 20)) + 10;
+
+		
+		food.y = (rand() % (maxY - 10)) + 5;
+	}
+	
+	void drawPart(point drawPoint) {
+		mvprintw(drawPoint.y, drawPoint.x, "o");
+	}
+	void drawFood(point drawPoint) {
+		mvprintw(drawPoint.y, drawPoint.x, "*");
+	}
+
+	void cursesInit() {
+		initscr(); 
+		//noecho(); 
+		keypad(stdscr, TRUE);
+		cbreak();
+		timeout(100);
+		curs_set(FALSE); 
+		
+		getmaxyx(stdscr, maxY, maxX);
+	}
+
+	void init() {
+
+		Dir = RIGHT;
+		tailLength = 5;
+		gameOver = false;
+		score = 0;
+
+		clear(); 
+		
+		
+		int j = 0;
+		for(int i = tailLength; i >= 0; i--) {
+			point currPoint;
+			
+			currPoint.x = i;
+			currPoint.y = maxY / 2; 
+
+			snakeParts[j] = currPoint;
+			j++;
+		}
+
+
+		spawnFood();
+
+		refresh();
+	}
+
+	void shiftSnake() {
+		point tmp = snakeParts[tailLength - 1];
+
+		for(int i = tailLength - 1; i > 0; i--) {
+			snakeParts[i] = snakeParts[i-1];
+		}
+
+		snakeParts[0] = tmp;
+	}
+
+	void drawScreen() {
+		clear(); 
+
+		
+		if(gameOver)
+			mvprintw(maxY / 2, maxX / 2, "Game Over! Yuor score is %d", score);
+
+		
+		for(int i = 0; i < tailLength; i++) {
+			drawPart(snakeParts[i]);
+		}
+
+	
+		drawFood(food);
+
+		mvprintw(1, 2, "Score: %i", score);
+
+		refresh();
+
+		
+	}
+
+	int main(int argc, char *argv[]) {
+		cursesInit();
+		init();
+
+		int ch;
+		while(1) {
+			
+			getmaxyx(stdscr, maxY, maxX);
+			
+			if(gameOver) {
+				sleep(2);
+				init();
+			}
+
+			
+				ch = getch();
+
+				if(( ch=='d' || ch == KEY_RIGHT) && (Dir != RIGHT && Dir != LEFT)) {
+					Dir = RIGHT;
+				} else if (( ch=='a' || ch == KEY_LEFT) && (Dir != RIGHT && Dir != LEFT)) {
+					Dir = LEFT;
+				} else if((ch=='s' || ch == KEY_DOWN) && (Dir != UP && Dir != DOWN)) {
+					Dir = DOWN;
+				} else if((ch=='w' || ch == KEY_UP) && (Dir != UP && Dir != DOWN)) {
+					Dir = UP;
+				} else if ( ch=='f'){ timeout(60);} else if ( ch!='f'){ timeout(100);}
+
+			
+				nextX = snakeParts[0].x;
+				nextY = snakeParts[0].y;
+
+				if(Dir == RIGHT) nextX++;
+		    	else if(Dir == LEFT) nextX--;
+				else if(Dir == UP) nextY--;
+				else if(Dir == DOWN) nextY++;
+
+				if(nextX == food.x && nextY == food.y) {
+					point tail;
+					tail.x = nextX;
+					tail.y = nextY;
+
+					snakeParts[tailLength] = tail;
+
+					if(tailLength < 255)
+						tailLength++;
+					else
+						tailLength = 5; 
+
+					score += 10;
+					spawnFood();
+				} else {
+					
+					for(int i = 0; i < tailLength; i++) {
+						if(nextX == snakeParts[i].x && nextY == snakeParts[i].y) {
+							gameOver = true;
+							break;
+						}
+					}
+
+					snakeParts[tailLength - 1].x = nextX;
+					snakeParts[tailLength - 1].y = nextY;
+				}
+
+				
+				shiftSnake();
+
+				
+				if((nextX >= maxX || nextX < 0) || (nextY >= maxY || nextY < 0)) {
+					gameOver = true;
+				}
+
+			
+				drawScreen();
+		}
+
+		endwin(); 
+		nocbreak();
+
+		return 0;
+	}
